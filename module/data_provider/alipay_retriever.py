@@ -1,9 +1,7 @@
 # -*- coding:UTF-8 -*-
 import pandas as pd
 
-from utils import BillRecord
-from utils import strip_in_data, fuzzy_match_file_name
-from .base_retriever import BaseRetriever
+from .base_retriever import BaseRetriever, strip_in_data
 
 class AlipayRetriever(BaseRetriever):
     def __init__(self) -> None:

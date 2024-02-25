@@ -1,8 +1,7 @@
 # -*- coding:UTF-8 -*-
 import pandas as pd
 
-from utils import strip_in_data
-from .base_retriever import BaseRetriever
+from .base_retriever import BaseRetriever, strip_in_data
 
 class HandwriteRetriever(BaseRetriever):
     def __init__(self) -> None:
