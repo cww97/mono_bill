@@ -3,7 +3,6 @@ from utils import RequestContext
 from module.data_provider import AlipayRetriever, WechatRetriever
 from module.data_provider import BankICBCRetriever, HandwriteRetriever
 from module.sinker.cww_sinker import CwwSinker
-import pandas as pd
 
 def recall(ctx):
     AlipayRetriever().fetch(ctx)
