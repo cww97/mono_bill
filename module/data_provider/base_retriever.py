@@ -1,13 +1,5 @@
 # -*- coding:UTF-8 -*-
-import os
-
-from utils import BillRecord
-
-def fuzzy_match_file_name(query, file_path='data/source'):
-    candidates = os.listdir(file_path)
-    for i in range(len(candidates)):
-        if query in candidates[i]:
-            return os.path.join(file_path, candidates[i])
+from utils import BillRecord, fuzzy_match_file_name
 
 def strip_in_data(df):
     df = df.rename(columns={column_name: column_name.strip().replace('/', '') for column_name in df.columns})
@@ -16,18 +8,15 @@ def strip_in_data(df):
 
 class BaseRetriever:
     def __init__(self) -> None:
+        self.skip_retriever = False
         self.raw_data = None
 
     def fetch(self, ctx):
         self.req_data(ctx)
-        ctx.info_log.write("req_data", self.raw_data.shape[0])
-
-        self.fine_tune(ctx)
-
-        self.filter(ctx)
-        ctx.info_log.write("after_filter", self.raw_data.shape[0])
-
-        self.pack(ctx)
+        if not self.skip_retriever:
+            self.fine_tune(ctx)
+            self.filter(ctx)
+            self.pack(ctx)
 
         ctx.info_log.flush(self.__class__.__name__)
    
@@ -35,7 +24,12 @@ class BaseRetriever:
         ctx.info_log.write("csv", data_path)
     def req_data(self, ctx):
         data_path = fuzzy_match_file_name(self.fuzzy_file_name)
-        self.raw_data = self.read_csv_data(ctx, data_path)
+        if data_path == "":
+            self.skip_retriever = True
+            ctx.info_log.write("skip_retriever", 1)
+        else:
+            self.raw_data = self.read_csv_data(ctx, data_path)
+            ctx.info_log.write("req_data", self.raw_data.shape[0])
 
     def check_self_trans_white_list(self, description):
         white_list = ("收益发放", "自动转入", "转账收款到余额宝", "转入零钱通")
@@ -56,7 +50,7 @@ class BaseRetriever:
         ctx.info_log.write("filter_self_trans", self_trans_orders.shape[0])
     def filter(self, ctx):
         self.filter_self_trans(ctx)
-
+        ctx.info_log.write("after_filter", self.raw_data.shape[0])
 
     def fine_tune(self, ctx):
         self.raw_data['交易时间'] = self.raw_data['交易时间'].astype('datetime64[ns]')

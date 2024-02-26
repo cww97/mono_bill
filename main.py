@@ -1,5 +1,5 @@
 # -*- coding:UTF-8 -*-
-from utils import RequestContext
+from utils import RequestContext, fuzzy_match_file_name
 from module.data_provider import AlipayRetriever, WechatRetriever
 from module.data_provider import BankICBCRetriever, HandwriteRetriever
 from module.sinker.cww_sinker import CwwSinker
@@ -15,10 +15,12 @@ def sort(ctx):
     ctx.year = ctx.bill_records[0].date.year
 
 def sink(ctx):
-    CwwSinker().fetch(ctx)
+    CwwSinker(ctx).fetch(ctx)
 
 def main():
-    ctx = RequestContext()
+    conf_file = fuzzy_match_file_name("_conf.json")
+    ctx = RequestContext(conf_file)
+
     recall(ctx)
     sort(ctx)
     sink(ctx)

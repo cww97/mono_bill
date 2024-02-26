@@ -30,3 +30,4 @@ class BankICBCRetriever(BaseRetriever):
         self.raw_data = self.raw_data.drop(self.raw_data[self.raw_data["交易对方"].str.contains("陈伟文")].index)
         if self.raw_data[self.raw_data["交易币种"]!="人民币"].shape[0] > 0:
             raise Exception(f"存在非人民币交易，请手动处理")
+        ctx.info_log.write("after_filter", self.raw_data.shape[0])

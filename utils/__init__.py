@@ -1,2 +1,3 @@
 # -*- coding:UTF-8 -*-
-from utils.proto import *
+from .proto import *
+from .methods import *

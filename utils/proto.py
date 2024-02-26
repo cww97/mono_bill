@@ -1,4 +1,5 @@
 # -*- coding:UTF-8 -*-
+import json
 from datetime import datetime
 from dataclasses import dataclass
 
@@ -17,14 +18,21 @@ class BillRecord:
 class RequestContext:
     bill_records: list[BillRecord]
 
-    def __init__(self) -> None:
+    def __init__(self, conf_file="") -> None:
+        self.info_log = MonoLogger("INFO")
+
         self.year = datetime.now().year
         self.bill_records = []
 
-        self.info_log = MonoLogger("INFO")
-        # self.debug_log = MonoLogger()
-        # self.warn_log = MonoLogger()
-        # self.error_log = MonoLogger()
+        if conf_file == "":
+            self.conf_dict = {}
+        else:
+            with open(conf_file,'r') as load_f:
+                self.conf_dict = json.load(load_f)
+                self.info_log.write("load_conf_from", conf_file)
+
+        self.info_log.write("init_finish", 1)
+        self.info_log.flush("RequestContext")
 
 class MonoLogger:
     def __init__(self, level) -> None:

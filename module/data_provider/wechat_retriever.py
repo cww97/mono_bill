@@ -22,6 +22,6 @@ class WechatRetriever(BaseRetriever):
         # self.raw_data.to_csv('data/tmp.csv')
 
     def filter(self, ctx):
-        super().filter(ctx)
         # 过滤非常小的红包
         self.raw_data = self.raw_data.drop(self.raw_data[(self.raw_data["交易分类"].str.contains("微信红包")) & (abs(self.raw_data["金额"]) <= 10)].index)
+        super().filter(ctx)

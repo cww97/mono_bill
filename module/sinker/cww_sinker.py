@@ -12,20 +12,16 @@ class CwwSinker:
     - 分为两个队列(daily/huge)
     - 自动按月拆分写进多个sheet(目前必须从1月开始)
     '''
-    def __init__(self) -> None:
+    def __init__(self, ctx) -> None:
         self.sink_len = 11
         self.alias = {
-            "上海市宝山区大场医院": "大场医院",
-            "上海市宝山区大场医院移动支付": "移动支付",
-            "深圳市瑞安医疗服务有限公司": "瑞安医疗",
             "收款方备注:二维码收款": "二维码收款",
             "高德地图打车订单": "taxi",
-            "上海伏沄售卖机": "茶水间",
-            "智慧零售开门柜订单": "饮料机",
             "顺丰速运有限公司": "顺丰快递",
-            "上海宽娱数码科技有限公司": "b站",
-            "北京抖音信息服务有限公司": "抖音",
         }
+        if ctx.conf_dict.get("sinker", {}).get("sinker_alias", None) is not None:
+            self.alias.update(ctx.conf_dict.get("sinker", {}).get("sinker_alias", {}))
+        ctx.info_log.write("sinker_alias", len(self.alias))
         self.font = Font('等线')
 
     def prepare_df(self, ctx):
@@ -42,15 +38,14 @@ class CwwSinker:
     def find_row_for_huge_item(self, daily_list, huge_item):
         for daily_item in daily_list:
             if daily_item[0] == huge_item[0] and daily_item[3] == "":
-                # import pdb; pdb.set_trace()
                 daily_item[3], daily_item[4] = huge_item[1], huge_item[2]
                 return daily_item
         # 满了 or 当天没有: 在 next_day 前 insert
         for daily_item in daily_list:
-            if daily_item[0] == huge_item[0]+1:
-                # idx = daily_list.index(daily_item)
-                daily_list.insert(daily_list.index(daily_item), huge_item[0:1] + ["", ""] + huge_item[1:3])
-                return daily_list[daily_list.index(daily_item)-1]
+            if  huge_item[0]+1 <= daily_item[0]:
+                idx = daily_list.index(daily_item)
+                daily_list.insert(idx, huge_item[0:1] + ["", ""] + huge_item[1:3])
+                return daily_list[idx-1]
         raise Exception(f"[CwwSinker] sth wrong in find_row_for_huge_item: {huge_item}")
     def merge_queue(self, ctx, daily_lists, huge_lists, _csv="data/tmp"):
         assert len(daily_lists) == len(huge_lists)
@@ -59,8 +54,10 @@ class CwwSinker:
             month = daily_list[0][3]
             assert i + 1 == month  # 从一月开始计算
             daily_list = [x[:3] + ["", ""] for x in daily_list]
+            daily_list.append([32, "", "", "", ""])  # 虚拟日期, idx用
             for huge_item in huge_list:
                 item = self.find_row_for_huge_item(daily_list, huge_item)
+            daily_list.pop()  # 删除虚拟日期
             merged_lists.append(daily_list)
             if _csv != "":
                 df_merge = pd.DataFrame(daily_list, columns=["date", "description", "amount", "logic1", "logic2"])
