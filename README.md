@@ -1,4 +1,4 @@
 # mono_bill
 
 todo:
-- 汇总全年
+- 过滤tiny的红包

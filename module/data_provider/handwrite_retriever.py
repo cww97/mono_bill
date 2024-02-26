@@ -12,6 +12,7 @@ class HandwriteRetriever(BaseRetriever):
     def read_csv_data(self, ctx, data_path):
         super().read_csv_data(ctx, data_path)
         df = pd.read_csv(data_path, header=0, encoding='gbk', index_col=False)
+        # df = pd.read_csv(data_path, header=0, encoding='utf-8', index_col=False)
         df = strip_in_data(df).dropna(how="all")
         df["交易对方"] = ""
         # import ipdb; ipdb.set_trace()

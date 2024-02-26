@@ -26,6 +26,7 @@ class CwwSinker:
             "上海宽娱数码科技有限公司": "b站",
             "北京抖音信息服务有限公司": "抖音",
         }
+        self.font = Font('等线')
 
     def prepare_df(self, ctx):
         for record in ctx.bill_records:
@@ -57,7 +58,6 @@ class CwwSinker:
         for i, (daily_list, huge_list) in enumerate(zip(daily_lists, huge_lists)):
             month = daily_list[0][3]
             assert i + 1 == month  # 从一月开始计算
-            # import pdb; pdb.set_trace()
             daily_list = [x[:3] + ["", ""] for x in daily_list]
             for huge_item in huge_list:
                 item = self.find_row_for_huge_item(daily_list, huge_item)
@@ -66,7 +66,6 @@ class CwwSinker:
                 df_merge = pd.DataFrame(daily_list, columns=["date", "description", "amount", "logic1", "logic2"])
                 df_merge.to_csv(f"{_csv}/tmp_merge_{month:02d}.csv", index=False)
                 # ctx.info_log.write(f"merged_csv", f"{_csv}/tmp_merge.csv")
-        # import pdb; pdb.set_trace()
         return merged_lists
 
     def fetch(self, ctx):
@@ -102,6 +101,8 @@ class CwwSinker:
 
     def sink_excel(self, ctx, merged_lists):
         wb = openpyxl.Workbook()
+        ws_year = wb.worksheets[0]
+        ws_year.append(["month", "daily", "huge", "salary", "monthly"])
         for i, month_list in enumerate(merged_lists):
             month = num2month[i + 1]
             ws = wb.create_sheet(month)
@@ -110,20 +111,21 @@ class CwwSinker:
                     month_list[i][0] = ""
             salary = 0
             for row in month_list:
-                if (row[3]==":工资"):
-                    salary += row[4]
                 ws.append(row)
+                salary += row[4] if row[3]==":工资" else 0
+
             # 月度汇总
             ws['F2'], ws['F3'] = "daily", f'=SUM(C:C)'
             ws['G2'], ws['G3'] = "huge", f'=SUM(E:E)-H3'
             ws['H2'], ws['H3'] = "salary", salary
             ws['I2'], ws['I3'] = "total", f'=SUM(F3:H3)'
-
+            ws_year.append([month, f'={month}!F3', f'={month}!G3', f'={month}!H3', f'={month}!I3'])
+            # 格式刷
             ws.column_dimensions['B'].width = 17
             ws.column_dimensions['D'].width = 17
-            font = Font('等线')
             for row in range(ws.max_row):
                 for column in range(ws.max_column):
-                    ws.cell(row=row+1,column=column+1).font = font
+                    ws.cell(row=row+1,column=column+1).font = self.font
+        ws_year.append(["sum", "", "", "", f'=SUM(E2:E{ws_year.max_row})'])
         wb.save(f"data/cww账单{ctx.year}.xlsx")
         # import pdb; pdb.set_trace()

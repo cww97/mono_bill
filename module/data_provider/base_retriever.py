@@ -66,6 +66,8 @@ class BaseRetriever:
             return "huge"
         if record.商品说明 in ["太平洋保险", "工资"]:
             return "huge"
+        if "NUX" in record.商品说明:  # music
+            return "huge"
         if "生活费用" in record.商品说明:
             return "daily"
         return "daily" if record.金额 < 500.00 else "huge"
